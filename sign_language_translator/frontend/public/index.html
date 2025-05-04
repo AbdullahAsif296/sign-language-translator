@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Sign Language Translator" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <title>Sign Language Translator</title>
+    <!-- Preload MediaPipe files -->
+    <link rel="preload" href="%PUBLIC_URL%/mediapipe/hands.js" as="script" />
+    <link
+      rel="preload"
+      href="%PUBLIC_URL%/mediapipe/hands_solution_packed_assets_loader.js"
+      as="script"
+    />
+    <link
+      rel="preload"
+      href="%PUBLIC_URL%/mediapipe/hands_solution_simd_wasm_bin.js"
+      as="script"
+    />
+    <link
+      rel="preload"
+      href="%PUBLIC_URL%/mediapipe/hands_solution_wasm_bin.js"
+      as="script"
+    />
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!-- Load MediaPipe setup script -->
+    <script src="%PUBLIC_URL%/mediapipe/setup.js"></script>
+  </body>
+</html>
