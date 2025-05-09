@@ -1,6 +1,93 @@
 # Sign Language Translator
 
-A real-time sign language translation system using computer vision and machine learning. This application uses advanced AI techniques to recognize and translate sign language gestures in real-time, making communication more accessible for the deaf and hard-of-hearing community.
+This project is a real-time sign language recognition web app. It uses a webcam to detect hand signs, predicts the corresponding letter, and helps users build words interactively. The app features **auto-correct**, **autocomplete** suggestions with improved common word prioritization, and convenient text editing tools.
+
+## Features
+
+- Real-time hand sign recognition using MediaPipe and a custom ML model
+- Build words by showing signs one by one
+- **Auto-correct**: Suggests the closest valid English word for the current input
+- **Autocomplete**: Suggests common words first, prioritizing everyday vocabulary
+- **Convenient text editing**:
+  - Backspace button under the current word for easy character deletion
+  - Clear button to reset the current word
+  - Intuitive word and sentence management
+- Modern, responsive UI with user-friendly controls
+
+## How It Works
+
+- The frontend captures hand landmarks and sends them to the backend for prediction.
+- As you build a word, the frontend requests suggestions from the backend.
+- The backend uses Python's `nltk` with both the standard words corpus and the Brown corpus to provide:
+  - **Smart Autocomplete**: Prioritizes common English words over obscure ones
+  - **Auto-correct**: Finds the closest valid English word using edit distance
+- Suggestions are shown below the current word. Click to accept.
+
+## Backend: Suggestion API
+
+- **Endpoint:** `/suggest` (POST)
+- **Request:** `{ "current_word": "helo" }`
+- **Response:**
+  ```json
+  {
+    "autocomplete": ["hello", "help", ...],
+    "autocorrect": "hello"
+  }
+  ```
+- Uses multiple word sources prioritized by commonality:
+  1. Most frequent English words list
+  2. NLTK Brown corpus (everyday language)
+  3. Standard NLTK words corpus (full dictionary)
+
+## Frontend: Usage
+
+- As you sign, the current word is updated.
+- Use the **backspace button** directly under the word to remove the last character.
+- Suggestions appear as "Common Word Suggestions" with options you can click.
+- Use the "Record" button to begin capturing signs, and "Pause" to temporarily stop.
+- Click "Add to Sentence" to build complete sentences from your words.
+
+## Setup
+
+1. **Backend**
+   - Install dependencies:
+     ```bash
+     pip install flask flask-cors nltk
+     ```
+   - Download NLTK words corpus (first run will auto-download, or run in Python):
+     ```python
+     import nltk
+     nltk.download('words')
+     ```
+   - Start the backend:
+     ```bash
+     python src/api.py
+     ```
+2. **Frontend**
+   - Install dependencies:
+     ```bash
+     npm install
+     ```
+   - Start the frontend:
+     ```bash
+     npm start
+     ```
+
+## Technologies Used
+
+- **Frontend:** React, MediaPipe Hands, Axios
+- **Backend:** Flask, NLTK, difflib
+- **ML Model:** (your custom model for sign prediction)
+
+## Extending Further
+
+- Add user profiles, voice output, or practice/quiz modes
+- Use a trie or more advanced ML for smarter suggestions
+- Support multiple sign languages
+
+---
+
+**Enjoy building words with sign language and smart suggestions!**
 
 ## System Requirements
 
@@ -268,3 +355,10 @@ If you encounter issues not covered above:
 1. Check the [GitHub Issues](https://github.com/your-repo/issues) page
 2. Join our [Discord Community](https://discord.gg/your-invite)
 3. Email support@signlanguagetranslator.com
+
+## Recent Updates
+
+- **May 2025**: Added backspace functionality for easier text editing
+- **May 2025**: Improved word suggestions to prioritize common words
+- **April 2025**: Enhanced UI with clearer labeling and feedback
+- **March 2025**: Optimized hand tracking performance

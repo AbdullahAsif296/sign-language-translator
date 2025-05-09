@@ -9,6 +9,7 @@ from utils.sequence_validator import SequenceValidator
 from utils.data_augmentation import DataAugmentor
 import logging
 import traceback
+import difflib
 
 app = Flask(__name__)
 
@@ -65,6 +66,42 @@ except Exception as e:
 # Store recent predictions for sequence validation
 recent_predictions = []
 MAX_SEQUENCE_LENGTH = 10
+
+try:
+    from nltk.corpus import words
+    import nltk
+    from nltk.corpus import brown  # Add brown corpus for word frequency
+    try:
+        ENGLISH_WORDS = set(words.words())
+        # Download brown corpus if not already available
+        try:
+            COMMON_WORDS = set(word.lower() for word in brown.words())
+        except LookupError:
+            nltk.download('brown')
+            COMMON_WORDS = set(word.lower() for word in brown.words())
+    except LookupError:
+        nltk.download('words')
+        ENGLISH_WORDS = set(words.words())
+        try:
+            COMMON_WORDS = set(word.lower() for word in brown.words())
+        except LookupError:
+            nltk.download('brown')
+            COMMON_WORDS = set(word.lower() for word in brown.words())
+except ImportError:
+    ENGLISH_WORDS = set()
+    COMMON_WORDS = set()
+
+# Create a frequency-based wordlist using the 10,000 most common English words
+COMMON_ENGLISH_WORDS = [
+    "the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", 
+    "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", 
+    "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their", 
+    "what", "so", "up", "out", "if", "about", "who", "get", "which", "go", "me", "when", "make", 
+    "can", "like", "time", "no", "just", "him", "know", "take", "people", "into", "year", "your", 
+    "good", "some", "could", "them", "see", "other", "than", "then", "now", "look", "only", "come", 
+    "its", "over", "think", "also", "back", "after", "use", "two", "how", "our", "work", "first", 
+    "well", "way", "even", "new", "want", "because", "any", "these", "give", "day", "most", "us"
+]
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -206,7 +243,50 @@ def upload():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@app.route('/suggest', methods=['POST'])
+def suggest():
+    data = request.get_json()
+    current_word = data.get('current_word', '').lower()
+    suggestions = []
+    correction = None
+
+    if current_word and ENGLISH_WORDS:
+        # First try to find common words from the most frequent English words
+        common_suggestions = [w for w in COMMON_ENGLISH_WORDS if w.startswith(current_word)]
+        
+        # Then look in the Brown corpus for common usage words
+        brown_suggestions = [w for w in COMMON_WORDS if w.startswith(current_word) 
+                               and w in ENGLISH_WORDS and len(w) > 1]
+        
+        # Finally, fall back to the full dictionary if needed
+        all_suggestions = [w for w in ENGLISH_WORDS if w.startswith(current_word)]
+        
+        # Prioritize common words, then add other dictionary words up to a maximum of 5
+        suggestions = (common_suggestions + 
+                      [w for w in brown_suggestions if w not in common_suggestions] + 
+                      [w for w in all_suggestions if w not in common_suggestions and w not in brown_suggestions])[:5]
+        
+        # Auto-correct: closest match, preferring common words first
+        # Try common words first with a higher cutoff
+        common_matches = difflib.get_close_matches(
+            current_word, 
+            list(COMMON_WORDS.intersection(ENGLISH_WORDS)),
+            n=1, 
+            cutoff=0.7
+        )
+        if common_matches:
+            correction = common_matches[0]
+        else:
+            # Fall back to all English words with a lower cutoff
+            matches = difflib.get_close_matches(current_word, ENGLISH_WORDS, n=1, cutoff=0.6)
+            correction = matches[0] if matches else None
+
+    return jsonify({
+        'autocomplete': suggestions,
+        'autocorrect': correction
+    })
+
 if __name__ == '__main__':
     print("Starting Flask server...")
     print("Server will be available at http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=5000, debug=True)
